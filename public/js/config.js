@@ -2,36 +2,37 @@
 
 // 1. CREDENCIALES DE FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSyCszUq2DulNkDN8WuETBwJ4SKOdlwOE2nI",
-  authDomain: "lab02-helpdesk.firebaseapp.com",
-  projectId: "lab02-helpdesk",
-  storageBucket: "lab02-helpdesk.firebasestorage.app",
-  messagingSenderId: "214491759226",
-  appId: "1:214491759226:web:217f37a83408769322b1c3"
+  apiKey: "AIzaSyDGsb4iDlpskoNx7XJiiKqcnNOfgWqMNQQ",
+  authDomain: "helpdesk-utn-lab02.firebaseapp.com",
+  projectId: "helpdesk-utn-lab02",
+  storageBucket: "helpdesk-utn-lab02.firebasestorage.app",
+  messagingSenderId: "530155586420",
+  appId: "1:530155586420:web:fa0f2344e5f9a4c2af2221"
 };
 
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
+
 const auth = firebase.auth();
 const db = firebase.firestore();
+db.settings({ experimentalForceLongPolling: true });
 
 // 2. CREDENCIALES DE SUPABASE
 const SUPABASE_URL = "https://nrseylrppsnsvzohtmuu.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_-Fvhq6DIUfolt-WFStphtA_PeDF1mit";
-const BUCKET_NAME = "archivos";
+const BUCKET_NAME = "archivos_lab";
 
 let supabaseClient = null;
-if (SUPABASE_ANON_KEY && window.supabase) {
+if (window.supabase) {
   supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
-// 3. FUNCIÓN COMPARTIDA PARA SUBIR IMÁGENES A LA CARPETA incidencias/
+// 3. FUNCIÓN COMPARTIDA PARA SUBIR IMÁGENES
 async function subirImagenIncidencia(file) {
   if (!file) return "";
 
   if (!supabaseClient) {
-    console.warn("Falta pegar SUPABASE_ANON_KEY en config.js. Usando URL temporal local.");
     return URL.createObjectURL(file);
   }
 
