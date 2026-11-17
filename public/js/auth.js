@@ -1,5 +1,14 @@
 // public/js/auth.js
 
+function conTimeout(promesa, ms = 10000) {
+  return Promise.race([
+    promesa,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Tiempo de espera agotado al conectar con Firestore.")), ms)
+    )
+  ]);
+}
+
 // Iniciar sesión
 const formLogin = document.getElementById("formLogin");
 if (formLogin) {
@@ -8,11 +17,15 @@ if (formLogin) {
     const correo = document.getElementById("loginCorreo").value.trim();
     const password = document.getElementById("loginPassword").value;
     const errorDiv = document.getElementById("loginError");
+    const btnSubmit = formLogin.querySelector('button[type="submit"]');
+
     errorDiv.classList.add("d-none");
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Ingresando...";
 
     try {
       const cred = await auth.signInWithEmailAndPassword(correo, password);
-      const userDoc = await db.collection("usuarios").doc(cred.user.uid).get();
+      const userDoc = await conTimeout(db.collection("usuarios").doc(cred.user.uid).get());
 
       if (!userDoc.exists) {
         throw new Error("El perfil de usuario no existe en Firestore.");
@@ -26,6 +39,8 @@ if (formLogin) {
     } catch (error) {
       errorDiv.textContent = "Error al iniciar sesión: " + error.message;
       errorDiv.classList.remove("d-none");
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = "Ingresar";
     }
   });
 }
@@ -41,18 +56,36 @@ if (formRegistro) {
     const departamento = document.getElementById("regDepartamento").value;
     const rol = document.getElementById("regRol").value;
     const errorDiv = document.getElementById("regError");
-    errorDiv.classList.add("d-none");
+    const btnSubmit = formRegistro.querySelector('button[type="submit"]');
 
+    errorDiv.classList.add("d-none");
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Registrando...";
+
+    let cred = null;
     try {
-      const cred = await auth.createUserWithEmailAndPassword(correo, password);
-      await db.collection("usuarios").doc(cred.user.uid).set({
-        uid: cred.user.uid,
-        nombre: nombre,
-        correo: correo,
-        departamento: departamento,
-        rol: rol,
-        fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      cred = await auth.createUserWithEmailAndPassword(correo, password);
+      try {
+        await conTimeout(
+          db.collection("usuarios").doc(cred.user.uid).set({
+            uid: cred.user.uid,
+            nombre: nombre,
+            correo: correo,
+            departamento: departamento,
+            rol: rol,
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+          })
+        );
+      } catch (firestoreError) {
+        try {
+          await cred.user.delete();
+        } catch (rollbackError) {
+          console.error("No se pudo eliminar la cuenta creada en Auth:", rollbackError);
+        }
+        throw new Error("No se pudo guardar en Firestore: " + firestoreError.message);
+      }
+
+      alert("¡Cuenta creada exitosamente! Redirigiendo...");
 
       if (rol === "admin") window.location.href = "admin_cola.html";
       else if (rol === "tecnico") window.location.href = "tecnico_panel.html";
@@ -61,11 +94,13 @@ if (formRegistro) {
     } catch (error) {
       errorDiv.textContent = "Error al registrar: " + error.message;
       errorDiv.classList.remove("d-none");
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = "Registrar Usuario";
     }
   });
 }
 
-// Protección de rutas (disponible para todos los módulos del equipo)
+// Protección de rutas
 function protegerRuta(rolPermitido, callbackUsuario) {
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
