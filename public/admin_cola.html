@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrador - Help Desk TI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">Help Desk TI | Admin</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAdmin">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navAdmin">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link active" href="admin_cola.html">Cola de Averías</a></li>
+          <li class="nav-item"><a class="nav-link" href="admin_reportes.html">Estadísticas y Reportes</a></li>
+        </ul>
+        <span id="nombreAdminNav" class="navbar-text text-light me-3 small"></span>
+        <button onclick="cerrarSesion()" class="btn btn-outline-light btn-sm">Cerrar sesión</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <h4 class="mb-0 fw-bold">Cola de Incidencias</h4>
+      <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0 small fw-semibold">Filtrar estado:</label>
+        <select id="filtroEstado" class="form-select form-select-sm" style="width: auto;">
+          <option value="TODOS">Todos</option>
+          <option value="Pendiente" selected>Pendientes</option>
+          <option value="Asignada">Asignadas</option>
+          <option value="Rechazada">Rechazadas por usuario</option>
+          <option value="Resuelta">Resueltas</option>
+          <option value="Cerrada">Cerradas</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="contenedorIncidencias" class="row g-3">
+      <div class="col-12 text-center py-5 text-muted">Cargando incidencias...</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin_cola.js"></script>
+</body>
+</html>

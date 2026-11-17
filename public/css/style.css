@@ -1,0 +1,22 @@
+/* public/css/style.css */
+body {
+  background-color: #f4f6f9;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.card-custom {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.badge-pendiente { background-color: #ffc107; color: #000; }
+.badge-asignada { background-color: #0dcaf0; color: #000; }
+.badge-resuelta { background-color: #198754; color: #fff; }
+.badge-cerrada { background-color: #6c757d; color: #fff; }
+.badge-rechazada { background-color: #dc3545; color: #fff; }
