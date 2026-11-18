@@ -2,6 +2,8 @@
 let listaTecnicos = [];
 const filtroEstado = document.getElementById("filtroEstado");
 const filtroInicial = new URLSearchParams(window.location.search).get("filtroEstado");
+const modalBitacoraAdmin = bootstrap.Modal.getOrCreateInstance(document.getElementById("modalBitacoraAdmin"));
+const contenidoBitacoraAdmin = document.getElementById("contenidoBitacoraAdmin");
 
 if (Array.from(filtroEstado.options).some((opcion) => opcion.value === filtroInicial)) {
   filtroEstado.value = filtroInicial;
@@ -94,6 +96,9 @@ function escucharIncidencias() {
 
             <div class="mt-auto pt-2 border-top">
               ${asignacionHtml}
+              <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="verBitacora('${id}')">
+                Ver bitácora
+              </button>
               <a href="chat.html?incidenciaId=${encodeURIComponent(id)}&filtroEstado=${encodeURIComponent(filtroEstado.value)}" class="btn btn-sm btn-outline-dark w-100">
                 Abrir Chat de Soporte
               </a>
@@ -104,6 +109,73 @@ function escucharIncidencias() {
       contenedor.innerHTML += card;
     });
   });
+}
+
+window.verBitacora = async function(incidenciaId) {
+  contenidoBitacoraAdmin.innerHTML = '<p class="text-muted mb-0">Cargando bitácora...</p>';
+  modalBitacoraAdmin.show();
+
+  try {
+    const snapshot = await db.collection("bitacora_incidencias")
+      .where("incidenciaId", "==", incidenciaId)
+      .get();
+    const registros = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    registros.sort((a, b) => obtenerMilisegundosBitacora(a.fecha) - obtenerMilisegundosBitacora(b.fecha) || a.id.localeCompare(b.id));
+    contenidoBitacoraAdmin.replaceChildren();
+
+    if (registros.length === 0) {
+      contenidoBitacoraAdmin.innerHTML = '<p class="text-muted mb-0">Esta incidencia todavía no tiene registros en la bitácora.</p>';
+      return;
+    }
+
+    registros.forEach((registro) => {
+      const entrada = document.createElement("article");
+      entrada.className = "border-bottom pb-3 mb-3";
+
+      const encabezado = document.createElement("p");
+      encabezado.className = "mb-1";
+      const tecnico = document.createElement("strong");
+      tecnico.textContent = registro.tecnicoNombre || "Técnico";
+      const fecha = document.createElement("small");
+      fecha.className = "text-muted ms-2";
+      fecha.textContent = registro.fecha?.toDate
+        ? registro.fecha.toDate().toLocaleString("es-CR")
+        : "Fecha no disponible";
+      encabezado.append(tecnico, fecha);
+
+      const comentario = document.createElement("p");
+      comentario.className = "mb-2";
+      comentario.style.whiteSpace = "pre-wrap";
+      comentario.textContent = registro.comentario || "";
+      entrada.append(encabezado, comentario);
+
+      if (registro.imagenUrl) {
+        const enlaceImagen = document.createElement("a");
+        enlaceImagen.href = registro.imagenUrl;
+        enlaceImagen.target = "_blank";
+        enlaceImagen.rel = "noopener noreferrer";
+
+        const imagen = document.createElement("img");
+        imagen.src = registro.imagenUrl;
+        imagen.alt = "Evidencia adjunta a la bitácora";
+        imagen.className = "img-fluid rounded";
+        imagen.style.maxHeight = "300px";
+        enlaceImagen.appendChild(imagen);
+        entrada.appendChild(enlaceImagen);
+      }
+
+      contenidoBitacoraAdmin.appendChild(entrada);
+    });
+  } catch (error) {
+    console.error("Error al cargar la bitácora para administración:", error);
+    contenidoBitacoraAdmin.innerHTML = '<div class="alert alert-danger mb-0">No se pudo cargar la bitácora. Intenta nuevamente.</div>';
+  }
+};
+
+function obtenerMilisegundosBitacora(fecha) {
+  if (fecha?.toMillis) return fecha.toMillis();
+  if (fecha instanceof Date) return fecha.getTime();
+  return 0;
 }
 
 async function asignarTecnico(incidenciaId) {

@@ -24,23 +24,37 @@ function cargarIncidenciasAsignadas(tecnicoId) {
 
     unsubscribeIncidenciasAsignadas = db.collection("incidencias")
       .where("tecnicoId", "==", tecnicoId)
-      .where("estado", "==", "Asignada")
       .onSnapshot((querySnapshot) => {
           contenedorAsignadas.innerHTML = "";
-          if (querySnapshot.empty) {
+          const incidenciasActivas = querySnapshot.docs.filter((doc) =>
+              ["Asignada", "Rechazada"].includes(doc.data().estado)
+          );
+          if (incidenciasActivas.length === 0) {
               contenedorAsignadas.innerHTML = `<div class="col-12"><p class="text-muted">No tienes averías asignadas actualmente.</p></div>`;
               return;
           }
 
-          querySnapshot.forEach((doc) => {
+          incidenciasActivas.forEach((doc) => {
               const inc = doc.data();
+              const estadoHtml = inc.estado === "Rechazada"
+                  ? `<span class="badge badge-rechazada">Rechazada por el usuario</span>`
+                  : `<span class="badge badge-asignada">Asignada</span>`;
+              const motivoRechazoHtml = inc.estado === "Rechazada" && inc.motivoRechazo
+                  ? `<p class="alert alert-danger py-1 px-2 small mt-2 mb-0"><strong>Motivo del rechazo:</strong> ${escaparHtmlTecnico(inc.motivoRechazo)}</p>`
+                  : "";
+              const evidenciaSolucionHtml = inc.estado === "Rechazada" && inc.imagenSolucionUrl
+                  ? `<a href="${inc.imagenSolucionUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success mt-2">Ver solución rechazada</a>`
+                  : "";
               let card = `
                 <div class="col-md-4 mb-3">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
+                            <div class="mb-2">${estadoHtml}</div>
                             <h5 class="card-title">${inc.titulo}</h5>
                             <h6 class="card-subtitle mb-2 text-muted">Depto: ${inc.departamento} | Tipo: ${inc.tipo}</h6>
                             <p class="card-text">${inc.descripcion}</p>
+                            ${motivoRechazoHtml}
+                            ${evidenciaSolucionHtml}
                             ${inc.imagenReporteUrl ? `<a href="${inc.imagenReporteUrl}" target="_blank" class="btn btn-sm btn-outline-info mb-2">Ver Foto de Falla</a>` : ''}
                             <br>
                             <button class="btn btn-primary btn-sm w-100 mt-2" onclick="abrirGestion('${doc.id}', '${encodeURIComponent(inc.titulo)}', '${encodeURIComponent(inc.descripcion)}')">Gestionar / Bitácora</button>
@@ -133,7 +147,7 @@ btnGuardarBitacora.addEventListener('click', async () => {
         const bitacoraRef = db.collection("bitacora_incidencias").doc();
         await db.runTransaction(async (transaccion) => {
             const incidencia = await transaccion.get(incidenciaRef);
-            if (!incidencia.exists || incidencia.data().estado !== "Asignada" || incidencia.data().tecnicoId !== user.uid) {
+            if (!incidencia.exists || !["Asignada", "Rechazada"].includes(incidencia.data().estado) || incidencia.data().tecnicoId !== user.uid) {
                 throw new Error("La incidencia ya no está asignada a este técnico.");
             }
 
@@ -190,7 +204,7 @@ btnMarcarResuelta.addEventListener('click', async () => {
         const incidenciaRef = db.collection("incidencias").doc(incidenciaId);
         await db.runTransaction(async (transaccion) => {
             const incidencia = await transaccion.get(incidenciaRef);
-            if (!incidencia.exists || incidencia.data().estado !== "Asignada" || incidencia.data().tecnicoId !== auth.currentUser.uid) {
+            if (!incidencia.exists || !["Asignada", "Rechazada"].includes(incidencia.data().estado) || incidencia.data().tecnicoId !== auth.currentUser.uid) {
                 throw new Error("La incidencia ya no está asignada a este técnico.");
             }
 
@@ -212,3 +226,12 @@ btnMarcarResuelta.addEventListener('click', async () => {
         btnMarcarResuelta.textContent = "Marcar como Resuelta";
     }
 });
+
+function escaparHtmlTecnico(valor) {
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}

@@ -4,6 +4,7 @@ const estadoChat = document.getElementById("estadoChat");
 const mensajesChat = document.getElementById("mensajesChat");
 const formMensaje = document.getElementById("formMensaje");
 const textoMensaje = document.getElementById("textoMensaje");
+const archivoMensaje = document.getElementById("archivoMensaje");
 const btnEnviarMensaje = document.getElementById("btnEnviarMensaje");
 
 let incidenciaActual = null;
@@ -62,29 +63,68 @@ auth.onAuthStateChanged(async (user) => {
 formMensaje.addEventListener("submit", async (event) => {
   event.preventDefault();
   const contenido = textoMensaje.value.trim();
-  if (!contenido || !incidenciaActual || !usuarioChat) return;
+  const archivo = archivoMensaje.files[0];
+  if ((!contenido && !archivo) || !incidenciaActual || !usuarioChat) return;
+
+  if (archivo && !archivo.type.startsWith("image/")) {
+    mostrarEstadoChat("El archivo seleccionado debe ser una imagen.", "danger");
+    return;
+  }
+  if (archivo && archivo.size > 10 * 1024 * 1024) {
+    mostrarEstadoChat("La imagen no puede superar los 10 MB.", "danger");
+    return;
+  }
 
   btnEnviarMensaje.disabled = true;
-  estadoChat.textContent = "";
+  textoMensaje.disabled = true;
+  archivoMensaje.disabled = true;
+  mostrarEstadoChat("Enviando...", "muted");
 
   try {
+    let imagenUrl = "";
+    if (archivo) imagenUrl = await subirImagenChat(archivo);
+
     await db.collection("chats").doc(incidenciaActual.id).collection("mensajes").add({
       contenido,
+      imagenUrl,
       autorId: usuarioChat.uid,
       autorNombre: usuarioChat.nombre || usuarioChat.correo || "Usuario",
       autorRol: usuarioChat.rol,
       fecha: firebase.firestore.FieldValue.serverTimestamp()
     });
     textoMensaje.value = "";
+    archivoMensaje.value = "";
     textoMensaje.focus();
+    mostrarEstadoChat("", "muted");
   } catch (error) {
     console.error("Error al enviar el mensaje:", error);
-    estadoChat.textContent = "No se pudo enviar el mensaje. Intenta nuevamente.";
-    estadoChat.className = "small text-danger mb-2";
+    mostrarEstadoChat("No se pudo enviar el mensaje: " + error.message, "danger");
   } finally {
     btnEnviarMensaje.disabled = !incidenciaActual;
+    textoMensaje.disabled = !incidenciaActual;
+    archivoMensaje.disabled = !incidenciaActual;
   }
 });
+
+async function subirImagenChat(archivo) {
+  if (!supabaseClient) {
+    throw new Error("El servicio de almacenamiento no está inicializado.");
+  }
+
+  const nombre = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const ruta = `chats/${incidenciaActual.id}/${nombre}`;
+  const { error } = await supabaseClient.storage
+    .from(BUCKET_NAME)
+    .upload(ruta, archivo, { contentType: archivo.type });
+
+  if (error) throw error;
+
+  const { data } = supabaseClient.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(ruta);
+  if (!data?.publicUrl) throw new Error("No se pudo obtener el enlace de la imagen.");
+  return data.publicUrl;
+}
 
 function prepararChat() {
   tituloIncidencia.textContent = `${incidenciaActual.titulo || "Incidencia"} · ${incidenciaActual.estado || ""}`;
@@ -122,7 +162,7 @@ function prepararChat() {
         rol.className = "text-muted small ms-2";
         rol.textContent = mensaje.autorRol === "admin" ? "Admin" : "Técnico";
         const texto = document.createElement("p");
-        texto.className = "mb-0";
+        texto.className = mensaje.imagenUrl && mensaje.contenido ? "mb-2" : "mb-0";
         texto.textContent = mensaje.contenido || "";
         const fecha = document.createElement("small");
         fecha.className = "text-muted";
@@ -130,7 +170,23 @@ function prepararChat() {
           ? mensaje.fecha.toDate().toLocaleString("es-CR")
           : mensaje.pendiente ? "Enviando..." : "Fecha no disponible";
 
-        fila.append(autor, rol, texto, fecha);
+        fila.append(autor, rol);
+        if (mensaje.contenido) fila.appendChild(texto);
+        if (mensaje.imagenUrl) {
+          const enlaceImagen = document.createElement("a");
+          enlaceImagen.href = mensaje.imagenUrl;
+          enlaceImagen.target = "_blank";
+          enlaceImagen.rel = "noopener noreferrer";
+
+          const imagen = document.createElement("img");
+          imagen.src = mensaje.imagenUrl;
+          imagen.alt = "Imagen adjunta al mensaje";
+          imagen.className = "img-fluid rounded mt-2";
+          imagen.style.maxHeight = "320px";
+          enlaceImagen.appendChild(imagen);
+          fila.appendChild(enlaceImagen);
+        }
+        fila.appendChild(fecha);
         mensajesChat.appendChild(fila);
       });
 
@@ -145,6 +201,11 @@ function obtenerMilisegundos(fecha) {
     if (fecha?.toMillis) return fecha.toMillis();
     if (fecha instanceof Date) return fecha.getTime();
     return 0;
+}
+
+function mostrarEstadoChat(mensaje, color) {
+  estadoChat.textContent = mensaje;
+  estadoChat.className = `small text-${color} mb-2`;
 }
 
 function mostrarErrorChat(mensaje) {
