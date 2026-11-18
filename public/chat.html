@@ -25,10 +25,18 @@
       <div id="mensajesChat" class="border rounded bg-light p-3 mb-3" style="height: 50vh; min-height: 260px; overflow-y: auto;" aria-live="polite">
         <p class="text-muted mb-0">Cargando mensajes...</p>
       </div>
-      <form id="formMensaje" class="d-flex flex-column flex-sm-row gap-2">
-        <label for="textoMensaje" class="visually-hidden">Escribe un mensaje</label>
-        <input id="textoMensaje" class="form-control" type="text" maxlength="1000" autocomplete="off" placeholder="Escribe un mensaje..." required disabled>
-        <button id="btnEnviarMensaje" class="btn btn-primary" type="submit" disabled>Enviar</button>
+      <form id="formMensaje" class="row g-2">
+        <div class="col-12 col-md-7">
+          <label for="textoMensaje" class="visually-hidden">Escribe un mensaje</label>
+          <input id="textoMensaje" class="form-control" type="text" maxlength="1000" autocomplete="off" placeholder="Escribe un mensaje..." disabled>
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="archivoMensaje" class="visually-hidden">Adjuntar imagen</label>
+          <input id="archivoMensaje" class="form-control" type="file" accept="image/*" disabled>
+        </div>
+        <div class="col-12 col-md-2 d-grid">
+          <button id="btnEnviarMensaje" class="btn btn-primary" type="submit" disabled>Enviar</button>
+        </div>
       </form>
     </section>
   </main>
@@ -36,6 +44,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/chat.js"></script>
