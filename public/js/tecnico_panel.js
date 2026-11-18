@@ -1,6 +1,3 @@
-var db = firebase.apps[0].firestore();
-var auth = firebase.apps[0].auth();
-
 const contenedorAsignadas = document.querySelector('#contenedorAsignadas');
 const modalGestion = new bootstrap.Modal(document.getElementById('modalGestion'));
 
@@ -15,24 +12,20 @@ const txtArchivoSolucion = document.querySelector('#txtArchivoSolucion');
 const btnMarcarResuelta = document.querySelector('#btnMarcarResuelta');
 
 let tecnicoActualNombre = "Técnico";
+let unsubscribeIncidenciasAsignadas = null;
 
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        db.collection("usuarios").doc(user.uid).get().then((doc) => {
-            if (doc.exists) {
-                tecnicoActualNombre = doc.data().nombre || "Técnico";
-            }
-            cargarIncidenciasAsignadas(user.uid);
-        });
-    }
+protegerRuta("tecnico", (tecnicoData) => {
+    tecnicoActualNombre = tecnicoData.nombre || "Técnico";
+    cargarIncidenciasAsignadas(auth.currentUser.uid);
 });
 
 function cargarIncidenciasAsignadas(tecnicoId) {
-    db.collection("incidencias")
+    if (unsubscribeIncidenciasAsignadas) unsubscribeIncidenciasAsignadas();
+
+    unsubscribeIncidenciasAsignadas = db.collection("incidencias")
       .where("tecnicoId", "==", tecnicoId)
       .where("estado", "==", "Asignada")
-      .get()
-      .then((querySnapshot) => {
+      .onSnapshot((querySnapshot) => {
           contenedorAsignadas.innerHTML = "";
           if (querySnapshot.empty) {
               contenedorAsignadas.innerHTML = `<div class="col-12"><p class="text-muted">No tienes averías asignadas actualmente.</p></div>`;
@@ -51,15 +44,16 @@ function cargarIncidenciasAsignadas(tecnicoId) {
                             ${inc.imagenReporteUrl ? `<a href="${inc.imagenReporteUrl}" target="_blank" class="btn btn-sm btn-outline-info mb-2">Ver Foto de Falla</a>` : ''}
                             <br>
                             <button class="btn btn-primary btn-sm w-100 mt-2" onclick="abrirGestion('${doc.id}', '${encodeURIComponent(inc.titulo)}', '${encodeURIComponent(inc.descripcion)}')">Gestionar / Bitácora</button>
+                            <a href="chat.html?incidenciaId=${doc.id}" class="btn btn-outline-dark btn-sm w-100 mt-2">Chat con administración</a>
                         </div>
                     </div>
                 </div>
               `;
               contenedorAsignadas.innerHTML += card;
           });
-      })
-      .catch((error) => {
+      }, (error) => {
           console.error("Error al cargar incidencias: ", error);
+          contenedorAsignadas.innerHTML = '<div class="col-12"><div class="alert alert-danger">No se pudieron cargar las averías asignadas.</div></div>';
       });
 }
 
@@ -114,28 +108,43 @@ btnGuardarBitacora.addEventListener('click', async () => {
     let imagenUrl = "";
 
     try {
+        if (!user) throw new Error("Debes iniciar sesión para guardar en la bitácora.");
+
         if (archivo) {
+            if (!supabaseClient) {
+                throw new Error("El servicio de almacenamiento no está inicializado.");
+            }
+
             const nombreUnico = `incidencias/bitacora_${Date.now()}_${archivo.name}`;
             const { error: uploadError } = await supabaseClient.storage
-                .from('archivos') // Reemplaza por tu bucket si difiere
+                .from(BUCKET_NAME)
                 .upload(nombreUnico, archivo, { contentType: archivo.type });
 
             if (uploadError) throw uploadError;
 
             const { data: urlData } = supabaseClient.storage
-                .from('archivos')
+                .from(BUCKET_NAME)
                 .getPublicUrl(nombreUnico);
             
             imagenUrl = urlData.publicUrl;
         }
 
-        await db.collection("bitacora_incidencias").add({
-            incidenciaId: incidenciaId,
-            tecnicoId: user.uid,
-            tecnicoNombre: tecnicoActualNombre,
-            comentario: comentario,
-            imagenUrl: imagenUrl,
-            fecha: new Date()
+        const incidenciaRef = db.collection("incidencias").doc(incidenciaId);
+        const bitacoraRef = db.collection("bitacora_incidencias").doc();
+        await db.runTransaction(async (transaccion) => {
+            const incidencia = await transaccion.get(incidenciaRef);
+            if (!incidencia.exists || incidencia.data().estado !== "Asignada" || incidencia.data().tecnicoId !== user.uid) {
+                throw new Error("La incidencia ya no está asignada a este técnico.");
+            }
+
+            transaccion.set(bitacoraRef, {
+                incidenciaId: incidenciaId,
+                tecnicoId: user.uid,
+                tecnicoNombre: tecnicoActualNombre,
+                comentario: comentario,
+                imagenUrl: imagenUrl,
+                fecha: firebase.firestore.FieldValue.serverTimestamp()
+            });
         });
 
         alert("Comentario agregado a la bitácora exitosamente.");
@@ -161,31 +170,41 @@ btnMarcarResuelta.addEventListener('click', async () => {
         btnMarcarResuelta.disabled = true;
         btnMarcarResuelta.textContent = "Subiendo y guardando...";
 
+        if (!supabaseClient) {
+            throw new Error("El servicio de almacenamiento no está inicializado.");
+        }
+
         const nombreUnico = `incidencias/solucion_${Date.now()}_${archivo.name}`;
         const { error: uploadError } = await supabaseClient.storage
-            .from('archivos')
+            .from(BUCKET_NAME)
             .upload(nombreUnico, archivo, { contentType: archivo.type });
 
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabaseClient.storage
-            .from('archivos')
+            .from(BUCKET_NAME)
             .getPublicUrl(nombreUnico);
         
         const imagenSolucionUrl = urlData.publicUrl;
 
-        await db.collection("incidencias").doc(incidenciaId).update({
-            estado: "Resuelta",
-            imagenSolucionUrl: imagenSolucionUrl,
-            fechaResolucion: new Date()
+        const incidenciaRef = db.collection("incidencias").doc(incidenciaId);
+        await db.runTransaction(async (transaccion) => {
+            const incidencia = await transaccion.get(incidenciaRef);
+            if (!incidencia.exists || incidencia.data().estado !== "Asignada" || incidencia.data().tecnicoId !== auth.currentUser.uid) {
+                throw new Error("La incidencia ya no está asignada a este técnico.");
+            }
+
+            transaccion.update(incidenciaRef, {
+                estado: "Resuelta",
+                imagenSolucionUrl: imagenSolucionUrl,
+                fechaResolucion: firebase.firestore.FieldValue.serverTimestamp()
+            });
         });
 
         alert("¡Incidencia marcada como Resuelta exitosamente!");
         modalGestion.hide();
         btnMarcarResuelta.disabled = false;
         btnMarcarResuelta.textContent = "Marcar como Resuelta";
-
-        cargarIncidenciasAsignadas(auth.currentUser.uid);
 
     } catch (error) {
         alert("Error al resolver la incidencia: " + error.message);

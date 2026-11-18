@@ -27,7 +27,7 @@ async function reportarIncidencia(event) {
   successDiv.classList.add("d-none");
 
   if (!foto) {
-    mostrarErrorIncidencia("Debe adjuntar una foto del dano.");
+    mostrarErrorIncidencia("Debe adjuntar una foto del daño.");
     return;
   }
 
@@ -68,11 +68,11 @@ async function reportarIncidencia(event) {
 
     form.reset();
     document.getElementById("departamento").value = usuarioActual.departamento || "";
-    successDiv.textContent = "Averia reportada correctamente.";
+    successDiv.textContent = "Avería reportada correctamente.";
     successDiv.classList.remove("d-none");
   } catch (error) {
     console.error("Error al crear la incidencia:", error);
-    mostrarErrorIncidencia("No se pudo registrar la averia. Intente nuevamente.");
+    mostrarErrorIncidencia("No se pudo registrar la avería. Intente nuevamente.");
   } finally {
     boton.disabled = false;
     boton.textContent = "Enviar reporte";
@@ -118,7 +118,7 @@ function escucharMisIncidencias() {
     (error) => {
       console.error("Error consultando incidencias:", error);
       document.getElementById("contenedorMisIncidencias").innerHTML =
-        '<div class="col-12"><div class="alert alert-danger">No se pudieron cargar las averias.</div></div>';
+        '<div class="col-12"><div class="alert alert-danger">No se pudieron cargar las averías.</div></div>';
     }
   );
 }
@@ -129,7 +129,7 @@ function renderizarIncidencias(incidencias) {
 
   if (incidencias.length === 0) {
     contenedor.innerHTML =
-      '<div class="col-12"><div class="alert alert-info">No hay averias para mostrar.</div></div>';
+      '<div class="col-12"><div class="alert alert-info">No hay averías para mostrar.</div></div>';
     return;
   }
 
@@ -143,7 +143,7 @@ function renderizarIncidencias(incidencias) {
       : "";
 
     const imagenReporte = incidencia.imagenReporteUrl
-      ? `<a href="${escaparHtml(incidencia.imagenReporteUrl)}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">Ver foto del dano</a>`
+      ? `<a href="${escaparHtml(incidencia.imagenReporteUrl)}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">Ver foto del daño</a>`
       : "";
     const imagenSolucion = incidencia.imagenSolucionUrl
       ? `<a href="${escaparHtml(incidencia.imagenSolucionUrl)}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success">Ver foto de la solucion</a>`
@@ -161,6 +161,16 @@ function renderizarIncidencias(incidencias) {
           </button>
         </div>
       `;
+    } else if (incidencia.estado === "Pendiente" || incidencia.estado === "Asignada") {
+      acciones = `
+        <div class="d-grid mt-3">
+          <button type="button" class="btn btn-outline-danger" onclick="cancelarIncidencia('${incidencia.id}')">
+            Cancelar reporte
+          </button>
+        </div>
+      `;
+    } else if (incidencia.estado === "Cancelada") {
+      acciones = '<div class="alert alert-secondary py-2 mt-3 mb-0">Reporte cancelado.</div>';
     }
 
     const motivoRechazo = incidencia.motivoRechazo
@@ -222,6 +232,41 @@ function abrirRechazo(incidenciaId) {
   bootstrap.Modal.getOrCreateInstance(document.getElementById("modalRechazo")).show();
 }
 
+async function cancelarIncidencia(incidenciaId) {
+  if (!confirm("¿Seguro que deseas cancelar este reporte? Esta acción no se puede deshacer.")) return;
+
+  const usuarioId = usuarioActual?.uid || auth.currentUser?.uid;
+  if (!usuarioId) {
+    alert("No se pudo identificar al usuario. Inicia sesión nuevamente.");
+    return;
+  }
+
+  try {
+    const incidenciaRef = db.collection("incidencias").doc(incidenciaId);
+    await db.runTransaction(async (transaccion) => {
+      const incidenciaDoc = await transaccion.get(incidenciaRef);
+      if (!incidenciaDoc.exists) throw new Error("El reporte ya no existe.");
+
+      const incidencia = incidenciaDoc.data();
+      if (incidencia.usuarioId !== usuarioId) {
+        throw new Error("No tienes permiso para cancelar este reporte.");
+      }
+      if (!["Pendiente", "Asignada"].includes(incidencia.estado)) {
+        throw new Error("Solo se pueden cancelar reportes pendientes o asignados.");
+      }
+
+      transaccion.update(incidenciaRef, {
+        estado: "Cancelada",
+        fechaCancelacion: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+    alert("Reporte cancelado correctamente.");
+  } catch (error) {
+    console.error("Error al cancelar el reporte:", error);
+    alert("No se pudo cancelar el reporte: " + error.message);
+  }
+}
+
 async function confirmarRechazo() {
   const incidenciaId = document.getElementById("incidenciaRechazoId").value;
   const motivo = document.getElementById("motivoRechazo").value.trim();
@@ -268,7 +313,8 @@ function obtenerClaseEstado(estado) {
     Asignada: "badge-asignada",
     Resuelta: "badge-resuelta",
     Cerrada: "badge-cerrada",
-    Rechazada: "badge-rechazada"
+    Rechazada: "badge-rechazada",
+    Cancelada: "badge-cancelada"
   };
 
   return clasesPermitidas[estado] || "bg-secondary";

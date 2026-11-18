@@ -1,5 +1,11 @@
 // public/js/admin_cola.js
 let listaTecnicos = [];
+const filtroEstado = document.getElementById("filtroEstado");
+const filtroInicial = new URLSearchParams(window.location.search).get("filtroEstado");
+
+if (Array.from(filtroEstado.options).some((opcion) => opcion.value === filtroInicial)) {
+  filtroEstado.value = filtroInicial;
+}
 
 protegerRuta("admin", async (adminData) => {
   document.getElementById("nombreAdminNav").textContent = `Hola, ${adminData.nombre}`;
@@ -7,7 +13,10 @@ protegerRuta("admin", async (adminData) => {
   escucharIncidencias();
 });
 
-document.getElementById("filtroEstado").addEventListener("change", () => {
+filtroEstado.addEventListener("change", () => {
+  const url = new URL(window.location.href);
+  url.searchParams.set("filtroEstado", filtroEstado.value);
+  window.history.replaceState({}, "", url);
   escucharIncidencias();
 });
 
@@ -24,7 +33,7 @@ let unsubscribeIncidencias = null;
 function escucharIncidencias() {
   if (unsubscribeIncidencias) unsubscribeIncidencias();
 
-  const filtro = document.getElementById("filtroEstado").value;
+  const filtro = filtroEstado.value;
   let query = db.collection("incidencias");
 
   if (filtro !== "TODOS") {
@@ -58,6 +67,17 @@ function escucharIncidencias() {
       const rechazoHtml = inc.motivoRechazo
         ? `<div class="alert alert-danger py-1 px-2 small mb-2"><strong>Motivo rechazo:</strong> ${inc.motivoRechazo}</div>`
         : "";
+      const asignacionHtml = inc.estado === "Cancelada"
+        ? `<p class="text-muted small mb-0">El usuario canceló este reporte.</p>`
+        : `
+          <label class="form-label small fw-semibold mb-1">Asignar Técnico:</label>
+          <div class="input-group input-group-sm mb-2">
+            <select id="selectTec_${id}" class="form-select">
+              ${opcionesTecnicos}
+            </select>
+            <button class="btn btn-primary" onclick="asignarTecnico('${id}')">Asignar</button>
+          </div>
+        `;
 
       const card = `
         <div class="col-12 col-md-6 col-lg-4">
@@ -73,14 +93,8 @@ function escucharIncidencias() {
             <div>${imgHtml}</div>
 
             <div class="mt-auto pt-2 border-top">
-              <label class="form-label small fw-semibold mb-1">Asignar Técnico:</label>
-              <div class="input-group input-group-sm mb-2">
-                <select id="selectTec_${id}" class="form-select">
-                  ${opcionesTecnicos}
-                </select>
-                <button class="btn btn-primary" onclick="asignarTecnico('${id}')">Asignar</button>
-              </div>
-              <a href="chat.html?incidenciaId=${id}" class="btn btn-sm btn-outline-dark w-100">
+              ${asignacionHtml}
+              <a href="chat.html?incidenciaId=${encodeURIComponent(id)}&filtroEstado=${encodeURIComponent(filtroEstado.value)}" class="btn btn-sm btn-outline-dark w-100">
                 Abrir Chat de Soporte
               </a>
             </div>
@@ -102,15 +116,24 @@ async function asignarTecnico(incidenciaId) {
   const tecnicoNombre = select.options[select.selectedIndex].getAttribute("data-nombre");
 
   try {
-    await db.collection("incidencias").doc(incidenciaId).update({
-      tecnicoId: tecnicoId,
-      tecnicoNombre: tecnicoNombre,
-      estado: "Asignada",
-      fechaAsignacion: firebase.firestore.FieldValue.serverTimestamp()
+    const incidenciaRef = db.collection("incidencias").doc(incidenciaId);
+    await db.runTransaction(async (transaccion) => {
+      const incidencia = await transaccion.get(incidenciaRef);
+      if (!incidencia.exists) throw new Error("La incidencia ya no existe.");
+      if (incidencia.data().estado === "Cancelada") {
+        throw new Error("No se puede asignar una incidencia cancelada.");
+      }
+
+      transaccion.update(incidenciaRef, {
+        tecnicoId: tecnicoId,
+        tecnicoNombre: tecnicoNombre,
+        estado: "Asignada",
+        fechaAsignacion: firebase.firestore.FieldValue.serverTimestamp()
+      });
     });
     alert(`Incidencia asignada a ${tecnicoNombre}.`);
   } catch (error) {
     console.error("Error al asignar técnico:", error);
-    alert("No se pudo asignar el técnico.");
+    alert("No se pudo asignar el técnico: " + error.message);
   }
 }

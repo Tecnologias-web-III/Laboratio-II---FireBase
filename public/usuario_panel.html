@@ -17,10 +17,10 @@
       <div class="collapse navbar-collapse" id="navUsuario">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <a class="nav-link active" href="#reportar">Reportar averia</a>
+            <a class="nav-link active" href="#reportar">Reportar avería</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#misIncidencias">Mis averias</a>
+            <a class="nav-link" href="#misIncidencias">Mis averías</a>
           </li>
         </ul>
         <span id="nombreUsuarioNav" class="navbar-text text-light me-3 small"></span>
@@ -31,7 +31,7 @@
 
   <main class="container my-4">
     <section id="reportar" class="card card-custom p-3 p-md-4 mb-4">
-      <h4 class="fw-bold mb-3">Reportar una averia</h4>
+      <h4 class="fw-bold mb-3">Reportar una avería</h4>
       <form id="formIncidencia" class="row g-3">
         <div class="col-12 col-md-6">
           <label for="titulo" class="form-label">Titulo</label>
@@ -54,7 +54,7 @@
           <textarea id="descripcion" class="form-control" rows="4" maxlength="1000" required></textarea>
         </div>
         <div class="col-12">
-          <label for="fotoReporte" class="form-label">Foto del dano</label>
+          <label for="fotoReporte" class="form-label">Foto del daño</label>
           <input type="file" id="fotoReporte" class="form-control" accept="image/*" required>
           <div class="form-text">Formatos de imagen; se recomienda un archivo menor a 10 MB.</div>
         </div>
@@ -70,7 +70,7 @@
 
     <section id="misIncidencias">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <h4 class="fw-bold mb-0">Mis averias</h4>
+        <h4 class="fw-bold mb-0">Mis averías</h4>
         <select id="filtroEstadoUsuario" class="form-select form-select-sm" style="width: auto;">
           <option value="TODOS">Todos los estados</option>
           <option value="Pendiente">Pendiente</option>
@@ -78,6 +78,7 @@
           <option value="Resuelta">Resuelta</option>
           <option value="Cerrada">Cerrada</option>
           <option value="Rechazada">Rechazada</option>
+          <option value="Cancelada">Cancelada</option>
         </select>
       </div>
       <div id="contenedorMisIncidencias" class="row g-3">
