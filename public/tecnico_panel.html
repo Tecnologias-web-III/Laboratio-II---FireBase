@@ -9,35 +9,25 @@
     <script src="https://kit.fontawesome.com/2c7bfef965.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="container">
-    <header class="header row mb-4">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="#">Help Desk - Técnico</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><button type="button" class="nav-link border-0 bg-transparent" onclick="cerrarSesion()">Cerrar sesión</button></li>
-                    </ul>
-                </div>
+<body>
+    <header>
+        <nav class="navbar navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="tecnico_panel.html">Help Desk TI | Técnico</a>
+                <button type="button" class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
             </div>
         </nav>
     </header>
 
-    <main class="row mt-5 pt-4">
-        <div class="col-12">
-            <h2>Panel de Averías Asignadas</h2>
-            <hr>
-            <div id="contenedorAsignadas" class="row">
-                <p class="text-muted">Cargando averías asignadas...</p>
-            </div>
+    <main class="container my-3 my-md-4">
+        <h1 class="h4 fw-bold mb-3">Panel de Averías Asignadas</h1>
+        <div id="contenedorAsignadas" class="row g-3">
+            <p class="text-muted">Cargando averías asignadas...</p>
         </div>
     </main>
 
     <div class="modal fade" id="modalGestion" tabindex="-1" aria-labelledby="modalGestionLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalGestionLabel">Gestionar Incidencia</h5>

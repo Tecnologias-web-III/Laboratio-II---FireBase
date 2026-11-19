@@ -7,6 +7,23 @@ body {
 .navbar-brand {
   font-weight: 700;
   letter-spacing: 0.5px;
+  min-width: 0;
+  white-space: normal;
+}
+
+.navbar-text,
+.card,
+.modal-content {
+  overflow-wrap: anywhere;
+}
+
+.navbar-text {
+  max-inline-size: 16rem;
+}
+
+.navbar-toggler,
+.navbar .btn {
+  flex-shrink: 0;
 }
 
 .card-custom {
@@ -21,3 +38,64 @@ body {
 .badge-cerrada { background-color: #6c757d; color: #fff; }
 .badge-rechazada { background-color: #dc3545; color: #fff; }
 .badge-cancelada { background-color: #6f42c1; color: #fff; }
+
+.filtro-estado {
+  width: auto;
+  max-width: 100%;
+}
+
+.mensajes-chat {
+  height: clamp(12rem, 50vh, 36rem);
+  height: clamp(12rem, 50dvh, 36rem);
+  overflow-y: auto;
+}
+
+.grafico-reporte {
+  min-width: 0;
+}
+
+.tabla-detalle-reporte th {
+  min-width: 7rem;
+}
+
+.tabla-detalle-reporte td:nth-child(2) {
+  min-width: 11rem;
+}
+
+@media (max-width: 991.98px) {
+  .navbar-collapse > .navbar-text {
+    display: block;
+    max-inline-size: none;
+  }
+
+  .navbar-collapse > .btn {
+    margin-bottom: .5rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .navbar-toggler,
+  .navbar .nav-link,
+  .btn,
+  .form-control,
+  .form-select {
+    min-height: 44px;
+  }
+
+  .navbar .nav-link,
+  .btn {
+    align-content: center;
+  }
+
+  .navbar-brand {
+    font-size: 1rem;
+  }
+
+  .filtro-estado {
+    width: 100%;
+  }
+
+  .modal-footer > .btn {
+    flex: 1 1 auto;
+  }
+}

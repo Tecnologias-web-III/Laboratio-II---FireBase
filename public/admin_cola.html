@@ -11,7 +11,8 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
       <a class="navbar-brand" href="#">Help Desk TI | Admin</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAdmin">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAdmin"
+        aria-controls="navAdmin" aria-expanded="false" aria-label="Abrir menú">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navAdmin">
@@ -25,12 +26,12 @@
     </div>
   </nav>
 
-  <div class="container my-4">
+  <main class="container my-3 my-md-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
       <h4 class="mb-0 fw-bold">Cola de Incidencias</h4>
-      <div class="d-flex align-items-center gap-2">
-        <label class="form-label mb-0 small fw-semibold">Filtrar estado:</label>
-        <select id="filtroEstado" class="form-select form-select-sm" style="width: auto;">
+      <div class="d-grid d-sm-flex align-items-center gap-2 filtro-estado">
+        <label for="filtroEstado" class="form-label mb-0 small fw-semibold text-nowrap">Filtrar estado:</label>
+        <select id="filtroEstado" class="form-select form-select-sm">
           <option value="TODOS">Todos</option>
           <option value="Pendiente" selected>Pendientes</option>
           <option value="Asignada">Asignadas</option>
@@ -45,7 +46,7 @@
     <div id="contenedorIncidencias" class="row g-3">
       <div class="col-12 text-center py-5 text-muted">Cargando incidencias...</div>
     </div>
-  </div>
+  </main>
 
   <div class="modal fade" id="modalBitacoraAdmin" tabindex="-1" aria-labelledby="tituloBitacoraAdmin" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">

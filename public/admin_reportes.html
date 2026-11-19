@@ -27,19 +27,19 @@
     </div>
   </nav>
 
-  <main class="container my-4">
+  <main class="container my-3 my-md-4">
     <h1 class="h4 fw-bold mb-3">Estadísticas y Reportes</h1>
     <form id="formReportes" class="card card-custom p-3 mb-3" aria-describedby="ayudaFechas">
       <fieldset id="filtrosReportes" class="row g-3 align-items-end" disabled>
-        <div class="col-auto">
+        <div class="col-12 col-sm">
           <label for="fechaDesde" class="form-label">Desde</label>
           <input id="fechaDesde" type="date" class="form-control">
         </div>
-        <div class="col-auto">
+        <div class="col-12 col-sm">
           <label for="fechaHasta" class="form-label">Hasta</label>
           <input id="fechaHasta" type="date" class="form-control">
         </div>
-        <div class="col-auto">
+        <div class="col-12 col-sm-auto d-grid">
           <button type="submit" class="btn btn-primary">Consultar</button>
         </div>
       </fieldset>
@@ -56,8 +56,8 @@
 
       <section class="card card-custom p-3 mb-3" aria-labelledby="tituloDepartamentos">
         <h2 id="tituloDepartamentos" class="h5 fw-bold">Incidencias por departamento</h2>
-        <div id="graficoDepartamentos" aria-hidden="true"></div>
-        <div class="table-responsive">
+        <div id="graficoDepartamentos" class="grafico-reporte" aria-hidden="true"></div>
+        <div class="table-responsive" tabindex="0" role="region" aria-labelledby="tituloDepartamentos">
           <table class="table table-sm align-middle mb-0">
             <caption>Porcentaje de cada tipo dentro del departamento y participación del departamento en el total del período.</caption>
             <thead><tr>
@@ -71,17 +71,17 @@
 
       <section class="card card-custom p-3 mb-3" aria-labelledby="tituloTecnicos">
         <h2 id="tituloTecnicos" class="h5 fw-bold">Tiempos por técnico</h2>
-        <div id="graficoTecnicos" aria-hidden="true"></div>
-        <div class="table-responsive mb-3">
+        <div id="graficoTecnicos" class="grafico-reporte" aria-hidden="true"></div>
+        <div class="table-responsive mb-3" tabindex="0" role="region" aria-labelledby="tituloTecnicos">
           <table class="table table-sm align-middle mb-0">
             <caption>Promedio desde la asignación hasta la resolución. Se incluyen casos resueltos o cerrados con ambas fechas válidas.</caption>
             <thead><tr><th scope="col">Técnico</th><th scope="col">Promedio Hardware</th><th scope="col">Promedio Software</th></tr></thead>
             <tbody id="tablaTecnicos"></tbody>
           </table>
         </div>
-        <h3 class="h6 fw-bold">Detalle por avería</h3>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
+        <h3 id="tituloDetalleTecnicos" class="h6 fw-bold">Detalle por avería</h3>
+        <div class="table-responsive" tabindex="0" role="region" aria-labelledby="tituloDetalleTecnicos">
+          <table class="table table-sm align-middle mb-0 tabla-detalle-reporte">
             <caption>La espera se mide desde el reporte hasta la asignación. La atención se mide desde la asignación hasta la resolución.</caption>
             <thead><tr>
               <th scope="col">Técnico</th><th scope="col">Avería</th><th scope="col">Tipo</th><th scope="col">Estado</th>
@@ -95,8 +95,8 @@
 
       <section class="card card-custom p-3 mb-3" aria-labelledby="tituloServicios">
         <h2 id="tituloServicios" class="h5 fw-bold">Incidencias por tipo de servicio</h2>
-        <div id="graficoServicios" aria-hidden="true"></div>
-        <div class="table-responsive">
+        <div id="graficoServicios" class="grafico-reporte" aria-hidden="true"></div>
+        <div class="table-responsive" tabindex="0" role="region" aria-labelledby="tituloServicios">
           <table class="table table-sm align-middle mb-0" aria-labelledby="tituloServicios">
             <thead><tr><th scope="col">Tipo</th><th scope="col">Total</th><th scope="col">% del período</th></tr></thead>
             <tbody id="tablaServicios"></tbody>

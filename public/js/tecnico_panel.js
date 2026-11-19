@@ -46,8 +46,8 @@ function cargarIncidenciasAsignadas(tecnicoId) {
                   ? `<a href="${inc.imagenSolucionUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success mt-2">Ver solución rechazada</a>`
                   : "";
               let card = `
-                <div class="col-md-4 mb-3">
-                    <div class="card h-100 shadow-sm">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card card-custom h-100">
                         <div class="card-body">
                             <div class="mb-2">${estadoHtml}</div>
                             <h5 class="card-title">${inc.titulo}</h5>

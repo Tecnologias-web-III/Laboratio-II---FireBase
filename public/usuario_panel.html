@@ -11,7 +11,8 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
       <a class="navbar-brand" href="usuario_panel.html">Help Desk TI | Usuario</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navUsuario">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navUsuario"
+        aria-controls="navUsuario" aria-expanded="false" aria-label="Abrir menú">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navUsuario">
@@ -29,7 +30,7 @@
     </div>
   </nav>
 
-  <main class="container my-4">
+  <main class="container my-3 my-md-4">
     <section id="reportar" class="card card-custom p-3 p-md-4 mb-4">
       <h4 class="fw-bold mb-3">Reportar una avería</h4>
       <form id="formIncidencia" class="row g-3">
@@ -60,7 +61,7 @@
         </div>
         <div id="formIncidenciaError" class="col-12 alert alert-danger d-none py-2 mb-0"></div>
         <div id="formIncidenciaSuccess" class="col-12 alert alert-success d-none py-2 mb-0"></div>
-        <div class="col-12">
+        <div class="col-12 d-grid d-sm-block">
           <button id="btnEnviarIncidencia" type="submit" class="btn btn-primary">
             Enviar reporte
           </button>
@@ -71,7 +72,7 @@
     <section id="misIncidencias">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h4 class="fw-bold mb-0">Mis averías</h4>
-        <select id="filtroEstadoUsuario" class="form-select form-select-sm" style="width: auto;">
+        <select id="filtroEstadoUsuario" class="form-select form-select-sm filtro-estado" aria-label="Filtrar mis averías por estado">
           <option value="TODOS">Todos los estados</option>
           <option value="Pendiente">Pendiente</option>
           <option value="Asignada">Asignada</option>
@@ -88,7 +89,7 @@
   </main>
 
   <div class="modal fade" id="modalRechazo" tabindex="-1" aria-labelledby="modalRechazoLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="modalRechazoLabel">Rechazar solucion</h5>
