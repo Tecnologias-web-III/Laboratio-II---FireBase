@@ -15,6 +15,12 @@ const formatoFechaReporte = new Intl.DateTimeFormat("es-CR", {
 });
 let datosReportes = null;
 let graficosListos = false;
+let anchoGraficos = 0;
+
+new ResizeObserver(() => {
+  const anchoActual = resultadosReportes.clientWidth;
+  if (anchoActual > 0 && anchoActual !== anchoGraficos) dibujarGraficos();
+}).observe(resultadosReportes);
 
 protegerRuta("admin", (adminData) => {
   document.getElementById("nombreAdminNav").textContent = "Hola, " + adminData.nombre;
@@ -210,11 +216,21 @@ function llenarTabla(id, filas, columnas) {
 function dibujarGraficos() {
   if (!graficosListos || !datosReportes) return;
 
+  anchoGraficos = resultadosReportes.clientWidth;
   const { departamentos, servicios, tecnicos } = datosReportes;
   const graficoTecnicos = document.getElementById("graficoTecnicos");
   const tecnicosConPromedio = tecnicos.filter(({ promedios }) => promedios.some((valor) => valor !== null));
   const colores = ["#0d6efd", "#198754", "#6c757d"];
-  const opciones = { height: 300, colors: colores, legend: { position: "top" } };
+  const compacto = anchoGraficos < 480;
+  const opciones = {
+    height: 300,
+    colors: colores,
+    legend: { position: compacto ? "bottom" : "top" }
+  };
+  const opcionesColumnas = compacto ? {
+    chartArea: { left: 54, right: 12, top: 12, bottom: 92 },
+    hAxis: { slantedText: true, slantedTextAngle: 35, textStyle: { fontSize: 10 } }
+  } : {};
   const visualizacion = google.visualization;
 
   try {
@@ -225,6 +241,7 @@ function dibujarGraficos() {
     new visualizacion.ColumnChart(document.getElementById("graficoDepartamentos"))
       .draw(datosDepartamentos, {
         ...opciones,
+        ...opcionesColumnas,
         isStacked: true,
         vAxis: { title: "Incidencias", format: "0", minValue: 0 }
       });
@@ -239,6 +256,7 @@ function dibujarGraficos() {
       ]);
       new visualizacion.ColumnChart(graficoTecnicos).draw(datosTecnicos, {
         ...opciones,
+        ...opcionesColumnas,
         vAxis: { title: "Horas promedio de atención", minValue: 0 }
       });
     }
@@ -248,7 +266,12 @@ function dibujarGraficos() {
       ...tiposServicio.map((nombre, i) => [nombre, servicios[i]])
     ]);
     new visualizacion.PieChart(document.getElementById("graficoServicios"))
-      .draw(datosServicios, { ...opciones, pieSliceText: "percentage", sliceVisibilityThreshold: 0 });
+      .draw(datosServicios, {
+        ...opciones,
+        ...(compacto && { chartArea: { width: "90%", height: "67%" } }),
+        pieSliceText: "percentage",
+        sliceVisibilityThreshold: 0
+      });
     errorGraficos.classList.add("d-none");
   } catch (error) {
     console.error("Error al dibujar los gráficos:", error);
